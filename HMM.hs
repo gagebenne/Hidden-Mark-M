@@ -8,6 +8,11 @@ seed::Int
 seed = 40
 generator = mkStdGen seed
 
+predictTweet :: String -> String -> Map (Maybe String, Maybe String) [String] -> [String]
+predictTweet w1 w2 m = map fst output
+    where
+        output = [(w1, w2)] ++ [ ( snd w, predictWord (Just (fst w), Just (snd w)) m) | w <- output]
+
 tokenize :: String -> [String]
 tokenize input = words (format input)
   where format :: String -> String
