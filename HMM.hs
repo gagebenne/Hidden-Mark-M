@@ -5,36 +5,43 @@ import System.Random
 import Data.List
 import System.IO.Unsafe
 
+type Token = String
+type Key = (Maybe Token, Maybe Token)
+type Value = [Token]
+type HMM = Map Key Value
 
-predictTweet :: String -> String -> Map (Maybe String, Maybe String) [String] -> [String]
-predictTweet w1 w2 m = map fst output
-    where
-        output = [(w1, w2)] ++ [ ( snd w, predictWord ( Just (fst w),  Just (snd w)) m) | w <- output]
-
-tokenize :: String -> [String]
+-- convert a string into a list of words, punctuation, etc.
+tokenize :: String -> [Token]
 tokenize input = words (format input)
-  where format :: String -> String
+  where format :: String -> Token 
         format s =  map toUpper (
           intercalate " " (terminate input))
 
 terminate input = [ x ++ " ~" | x <- (lines input) ]
 
-learn :: [String] -> Map (Maybe String, Maybe String) [String]
-learn (k1 : k2 : v : tokens)
-  | tokens == [] = addToken (Just k1, Just k2) v initialMap
-  | k1 == "~" = addToken (Nothing, Nothing) k2 (learn (k2 : v : tokens) )
-  | otherwise = addToken (Just k1, Just k2) v (learn (k2 : v : tokens) )
+-- create initial state of HMM with (Nothing, Nothing) -> [""] key-value pair
+initialHMM :: HMM
+initialHMM = Map.fromList [((Nothing, Nothing), [""])]
 
-
-initialMap :: Map (Maybe String, Maybe String) [String]
-initialMap = Map.fromList [((Nothing, Nothing), [""])]
-
-addToken :: (Maybe String, Maybe String) -> String -> Map (Maybe String, Maybe String) [String] -> Map (Maybe String, Maybe String) [String]
+-- given a key, a token, and an HMM, produce an updated HMM
+addToken :: Key -> Token -> HMM -> HMM
 addToken k v m =  Map.insertWith (++) k [v] (
                     Map.insertWith (++) ((fst k), Nothing) [v] (
                         Map.insertWith (++) (Nothing, snd k) [v] m))
 
-predictWord :: (Maybe String, Maybe String) -> Map (Maybe String, Maybe String) [String] -> String
+-- given a list of tokens, produce an HMM
+learn :: [Token] -> HMM
+learn (k1 : k2 : v : tokens)
+  | tokens == [] = addToken (Just k1, Just k2) v initialHMM
+  | k1 == "~" = addToken (Nothing, Nothing) k2 (learn (k2 : v : tokens) )
+  | otherwise = addToken (Just k1, Just k2) v (learn (k2 : v : tokens) )
+
+-- select a random element from a list
+getRandomElement :: [a] -> a
+getRandomElement l = l !! (unsafePerformIO (getStdRandom (randomR (0, (length l) - 1))))
+
+-- predict a word given a 
+predictWord :: Key -> HMM -> Token 
 predictWord k m =
   case Map.lookup k m of
     Just x -> getRandomElement x
@@ -46,5 +53,18 @@ predictWord k m =
           Just x -> getRandomElement x
           Nothing -> ""
 
-getRandomElement :: [String] -> String
-getRandomElement l = l !! (unsafePerformIO (getStdRandom (randomR (0, (length l) - 1))))
+predictForever :: Token -> Token -> HMM -> [Token]
+predictForever w1 w2 m = map fst output
+    where
+        output = [(w1, w2)] ++ [ ( snd w, predictWord ( Just (fst w),  Just (snd w)) m) | w <- output]
+
+notEndToken :: Token -> Bool
+notEndToken t = t /= "~"
+
+takeWhileInclusive :: (a -> Bool) -> [a] -> [a]
+takeWhileInclusive _ [] = []
+takeWhileInclusive p (x:xs) = x : if p x then takeWhileInclusive p xs
+                                         else []
+predictTweet :: Token -> Token -> HMM -> [Token]
+predictTweet w1 w2 m = takeWhileInclusive notEndToken (predictForever w1 w2 m)
+
