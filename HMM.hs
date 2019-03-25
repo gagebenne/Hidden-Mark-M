@@ -15,6 +15,7 @@ terminate input = [ x ++ " ~" | x <- (lines input) ]
 learn :: [String] -> Map (Maybe String, Maybe String) [String]
 learn (k1 : k2 : v : tokens)
   | tokens == [] = addToken (Just k1, Just k2) v initialMap
+  | k1 == "~" = addToken (Nothing, Nothing) k2 (learn (k2 : v : tokens) )
   | otherwise = addToken (Just k1, Just k2) v (learn (k2 : v : tokens) )
 
 
