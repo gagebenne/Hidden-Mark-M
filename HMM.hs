@@ -4,20 +4,37 @@ import qualified Data.Map as Map
 import System.Random
 import Data.List
 import System.IO.Unsafe
+import Data.Text hiding (map, takeWhile, length)
+import Data.Text (Text)
+import qualified Data.Text as Text
+import qualified Data.Text.IO as Text
 
-type Token = String
+type Token = Text
 type Key = (Maybe Token, Maybe Token)
 type Value = [Token]
 type HMM = Map Key Value
+type Tweet = [Text]
 
--- convert a string into a list of words, punctuation, etc.
-tokenize :: String -> [Token]
-tokenize input = words (format input)
-  where format :: String -> Token 
-        format s =  map toUpper (
-          intercalate " " (terminate input))
+main = do
+  s <- readFile "trump_tweets/2018.tweets"
+  print (learnTweets (tokenize (Text.pack s)))
+  -- Text.putStrLn (Text.pack (predictTweet (Text.pack "MEXICO") (Text.pack "MEXICO") s))
+  return 1
 
-terminate input = [ x ++ " ~" | x <- (lines input) ]
+tokenize :: Text -> [Tweet]
+tokenize input = map Text.words (Text.lines (Text.toUpper input))
+
+learnTweets :: [Tweet] -> HMM
+learnTweets (tweet : tweets)
+  | tweets == [] = learnTweet tweet
+  | otherwise = Map.union (learnTweet tweet) (learnTweets tweets)
+
+learnTweet :: Tweet -> HMM
+learnTweet (t1 : t2 : t3 : tokens)
+  | tokens == [] = addToken (Just t1, Just t2) t3 initialHMM
+  | otherwise = addToken (Just t1, Just t2) t3 (learnTweet ([t2] ++ [t3] ++ tokens) )
+learnTweet [t1, t2] = error "TWO"
+learnTweet [t1] = error "ONE"
 
 -- create initial state of HMM with (Nothing, Nothing) -> [""] key-value pair
 initialHMM :: HMM
@@ -51,7 +68,7 @@ predictWord k m =
         Just x -> getRandomElement x
         Nothing -> case Map.lookup (Nothing, Nothing) m of
           Just x -> getRandomElement x
-          Nothing -> ""
+          Nothing -> Text.pack ""
 
 -- produces an endless list of recursively predicted tokens based on two starter tokens
 predictForever :: Token -> Token -> HMM -> [Token]
@@ -59,15 +76,12 @@ predictForever w1 w2 m = map fst output
     where
         output = [(w1, w2)] ++ [ ( snd w, predictWord ( Just (fst w),  Just (snd w)) m) | w <- output]
 
-notEndToken :: Token -> Bool
-notEndToken t = t /= "~"
-
--- take from a list until an element matches a condition
-takeWhileInclusive :: (a -> Bool) -> [a] -> [a]
-takeWhileInclusive _ [] = []
-takeWhileInclusive p (x:xs) = x : if p x then takeWhileInclusive p xs
-                                         else []
-
 -- predict list of tokens until an end token is found
-predictTweet :: Token -> Token -> HMM -> [Token]
-predictTweet w1 w2 m = takeWhileInclusive notEndToken (predictForever w1 w2 m)
+--predictTweet :: Token -> Token -> HMM -> [Token]
+--predictTweet w1 w2 m = takeWhileInclusive notEndToken (predictForever w1 w2 m)
+
+predictTweet :: Text -> Text -> Text -> Text
+predictTweet w1 w2 input = Text.unwords (takeWhile ((/=) (Text.pack "~")) (map fst output))
+  where
+    output = [(w1, w2)] ++ [ ( snd w, predictWord ( Just (fst w),  Just (snd w)) m) | w <- output]
+      where m = learnTweets (tokenize input)
