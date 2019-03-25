@@ -40,7 +40,7 @@ learn (k1 : k2 : v : tokens)
 getRandomElement :: [a] -> a
 getRandomElement l = l !! (unsafePerformIO (getStdRandom (randomR (0, (length l) - 1))))
 
--- predict a word given a 
+-- predict a token given a key and an HMM
 predictWord :: Key -> HMM -> Token 
 predictWord k m =
   case Map.lookup k m of
@@ -53,6 +53,7 @@ predictWord k m =
           Just x -> getRandomElement x
           Nothing -> ""
 
+-- produces an endless list of recursively predicted tokens based on two starter tokens
 predictForever :: Token -> Token -> HMM -> [Token]
 predictForever w1 w2 m = map fst output
     where
@@ -61,10 +62,12 @@ predictForever w1 w2 m = map fst output
 notEndToken :: Token -> Bool
 notEndToken t = t /= "~"
 
+-- take from a list until an element matches a condition
 takeWhileInclusive :: (a -> Bool) -> [a] -> [a]
 takeWhileInclusive _ [] = []
 takeWhileInclusive p (x:xs) = x : if p x then takeWhileInclusive p xs
                                          else []
+
+-- predict list of tokens until an end token is found
 predictTweet :: Token -> Token -> HMM -> [Token]
 predictTweet w1 w2 m = takeWhileInclusive notEndToken (predictForever w1 w2 m)
-
