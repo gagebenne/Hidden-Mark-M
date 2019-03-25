@@ -1,11 +1,16 @@
 import Data.Char
 import Data.Map (Map)
 import qualified Data.Map as Map
+import Data.List
 
-tokenize input = words (stringToLower (noPunc input))
-  where
-    stringToLower s = map toLower s
-    noPunc s = filter (\x -> isAlpha x || isSpace x) s
+tokenize :: String -> [String]
+tokenize input = words (format input)
+  where format :: String -> String
+        format s =  map toUpper (
+          intercalate " " (terminate input))
+
+terminate input = [ x ++ " ~" | x <- (lines input) ]
+
 
 learn :: [String] -> Map (Maybe String, Maybe String) [String]
 learn (k1 : k2 : v : tokens)
