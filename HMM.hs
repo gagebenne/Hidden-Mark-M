@@ -3,15 +3,13 @@ import Data.Map (Map)
 import qualified Data.Map as Map
 import System.Random
 import Data.List
+import System.IO.Unsafe
 
-seed::Int
-seed = 40
-generator = mkStdGen seed
 
 predictTweet :: String -> String -> Map (Maybe String, Maybe String) [String] -> [String]
 predictTweet w1 w2 m = map fst output
     where
-        output = [(w1, w2)] ++ [ ( snd w, predictWord (Just (fst w), Just (snd w)) m) | w <- output]
+        output = [(w1, w2)] ++ [ ( snd w, predictWord ( Just (fst w),  Just (snd w)) m) | w <- output]
 
 tokenize :: String -> [String]
 tokenize input = words (format input)
@@ -49,7 +47,4 @@ predictWord k m =
           Nothing -> ""
 
 getRandomElement :: [String] -> String
-getRandomElement l = l !! rand where
-  n = length l
-  (rand, _) = randomR (0,(n-1)) generator
-
+getRandomElement l = l !! (unsafePerformIO (getStdRandom (randomR (0, (length l) - 1))))
