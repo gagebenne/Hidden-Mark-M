@@ -16,8 +16,10 @@ type HMM = Map Key Value
 type Tweet = [Text]
 
 main = do
-  s <- readFile "trump_tweets/2018.tweets"
-  Text.putStrLn (predictTweet (Text.pack "MAKE") (Text.pack "AMERICA") (learn (Text.pack s)))
+  s <- Text.readFile "trump_tweets/2018.tweets"
+  w1 <- Text.getLine
+  w2 <- Text.getLine
+  Text.putStrLn (predictTweet (Text.toUpper w1) (Text.toUpper w2) (learn s))
   return 1
 
 learn :: Text -> HMM
