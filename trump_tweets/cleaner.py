@@ -19,12 +19,17 @@ for yr in years:
     
     data = [ elem for elem in data if not elem['is_retweet'] ]
     
-    rx = re.compile('http[^\s]*')
+    url_rm = re.compile('http[^\s]*')
+    period_spacer = re.compile('\.')
+    quote_rm = re.compile('\"')
     
     outfile = open(ofn,'a') 
     for elem in data:
-        res = rx.sub(' ', elem['text']).strip()
-        output = html.unescape(res)
+        temp = url_rm.sub(' ', elem['text']).strip()
+        temp = period_spacer.sub(' .', temp).strip()
+        temp = quote_rm.sub('', temp).strip()
+
+        output = html.unescape(temp)
         outfile.write(output)
         outfile.write('\n')
     
