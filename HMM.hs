@@ -9,12 +9,14 @@ tokenize input = words (stringToLower (noPunc input))
 
 learn :: [String] -> Map (Maybe String, Maybe String) [String]
 learn (k1 : k2 : v : tokens)
-  | tokens == [] = addToken (Just k1, Just k2) v initMap
+  | tokens == [] = addToken (Just k1, Just k2) v initialMap
   | otherwise = addToken (Just k1, Just k2) v (learn (k2 : v : tokens) )
 
 
-initMap :: Map (Maybe String, Maybe String) [String]
-initMap = Map.fromList [((Nothing, Nothing), [])]
+initialMap :: Map (Maybe String, Maybe String) [String]
+initialMap = Map.fromList [((Nothing, Nothing), [])]
 
 addToken :: (Maybe String, Maybe String) -> String -> Map (Maybe String, Maybe String) [String] -> Map (Maybe String, Maybe String) [String]
-addToken k v map = Map.insertWith (++) k [v] map
+addToken k v m =  Map.insertWith (++) k [v] (
+                    Map.insertWith (++) ((fst k), Nothing) [v] (
+                        Map.insertWith (++) (Nothing, snd k) [v] m))
