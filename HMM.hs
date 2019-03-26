@@ -17,9 +17,10 @@ type Tweet = [Text]
 
 main = do
   s <- Text.readFile "trump_tweets/2018.tweets"
-  w1 <- Text.getLine
-  w2 <- Text.getLine
-  Text.putStrLn (predictTweet (Text.toUpper w1) (Text.toUpper w2) (learn s))
+  -- w1 <- Text.getLine
+  -- w2 <- Text.getLine
+  let hmm = learn s
+  Text.putStrLn (predictTweet (predictionStream Nothing Nothing hmm) hmm)
   return 1
 
 learn :: Text -> HMM
@@ -68,16 +69,10 @@ predictWord k m =
           Nothing -> Text.pack ""
 
 -- produces an endless list of recursively predicted tokens based on two starter tokens
-predictionStream :: Token -> Token -> HMM -> [Token]
-predictionStream w1 w2 hmm = map fst stream
-  where
-    stream = [(w1, w2)] ++ [ ( snd w, predictWord ( Just (fst w),  Just (snd w)) hmm) | w <- stream]
+predictionStream :: (Maybe Token) -> (Maybe Token) -> HMM -> [Token]
+predictionStream (Just w1) (Just w2) hmm = w1 : predictionStream (Just w2) (Just (predictWord (Just w1, Just w2) hmm)) hmm
+predictionStream Nothing (Just w2) hmm = predictionStream (Just w2) (Just (predictWord (Nothing, Just w2) hmm)) hmm
+predictionStream Nothing Nothing hmm = predictionStream Nothing (Just (predictWord (Nothing, Nothing) hmm)) hmm
 
--- predict list of tokens until an end token is found
---predictTweet :: Token -> Token -> HMM -> [Token]
---predictTweet w1 w2 m = takeWhileInclusive notEndToken (predictForever w1 w2 m)
-
-predictTweet :: Text -> Text -> HMM -> Text
-predictTweet w1 w2 hmm = Text.unwords (takeWhile ((/=) (Text.pack "\n")) stream)
-  where
-    stream = predictionStream w1 w2 hmm
+predictTweet :: [Token] -> HMM -> Text
+predictTweet stream hmm = Text.unwords (takeWhile ((/=) (Text.pack "\n")) stream)
