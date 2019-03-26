@@ -1,5 +1,7 @@
 # Trump Tweet Generator
 
+![Generated Trump Tweet](/tweet.png "Generated Trump Tweet")
+
 ## Authors
 Andy Monroe and Gage Benne
 
