@@ -15,13 +15,24 @@ type Value = [Token]
 type HMM = Map Key Value
 type Tweet = [Text]
 
-main = do
+tweet = do
   s <- Text.readFile "trump_tweets/2018.tweets"
-  -- w1 <- Text.getLine
-  -- w2 <- Text.getLine
+  
+  Text.putStr (Text.pack "First word: ")
+  t1 <- Text.getLine
+  Text.putStr (Text.pack "Second word: ")
+  t2 <- Text.getLine
+
+  Text.putStr (Text.pack "\n@realDonaldTrump\n")
+
   let hmm = learn s
-  Text.putStrLn (predictTweet (predictionStream Nothing Nothing hmm) hmm)
-  return 1
+  let tweet = predictTweet (predictionStream (prepareText t1) (prepareText t2) hmm) hmm
+  return tweet
+
+prepareText :: Text -> Maybe Text
+prepareText t
+  | Text.null t = Nothing
+  | otherwise = Just (Text.toUpper t)
 
 learn :: Text -> HMM
 learn input = Map.union (learnTweets (tokenize input)) (learnFirsts (tokenize input))
