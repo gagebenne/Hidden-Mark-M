@@ -1,4 +1,5 @@
 # Trump Tweet Generator
+*EECS 738**
 
 ![Generated Trump Tweet](/tweet.png "Generated Trump Tweet")
 
