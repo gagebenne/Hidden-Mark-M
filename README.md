@@ -3,7 +3,7 @@
 ![Generated Trump Tweet](/tweet.png "Generated Trump Tweet")
 
 ## Authors
-[Andy Monroe](https://www.andymonroe.dev) and Gage Benne(https://www.gagebenne.com)
+[Andy Monroe](https://www.andymonroe.dev) and [Gage Benne](https://www.gagebenne.com)
 
 ## Dataset
 We pulled our dataset from the [trump_tweet_data_archive](https://github.com/bpb27/trump_tweet_data_archive) hosted on GitHub..  Once collected in .json format, we convert it into a simplified format suitable for our purposes using a [simple python script](trump_tweets/cleaner.py).
